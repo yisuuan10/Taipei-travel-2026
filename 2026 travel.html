@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台北宜蘭漫遊 2026 | 長輩友善版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --muji-beige: #F7F2E9; 
+            --muji-gold: #B6A18B;  
+            --muji-text: #1A1A1A; 
+            --muji-border: #D1C9BC;
+            --base-size: 18px; 
+        }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--muji-beige);
+            color: var(--muji-text);
+            line-height: 2.0; 
+            font-size: var(--base-size);
+        }
+        .tab-active {
+            background-color: var(--muji-gold);
+            color: white !important;
+            border-color: var(--muji-gold) !important;
+        }
+        .day-content {
+            display: none;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        .day-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .map-btn {
+            display: inline-flex;
+            align-items: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            background-color: var(--muji-gold);
+            padding: 12px 24px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 15px;
+            text-decoration: none;
+        }
+
+        /* 手機版防遮擋間距 */
+        .main-container { margin-top: 1.5rem; }
+        @media (max-width: 640px) {
+            .main-container { margin-top: 6.5rem; } 
+            .day-card { padding: 1.5rem; }
+            h2 { font-size: 1.7rem; }
+        }
+
+        /* 縮放按鈕 */
+        .font-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 100;
+        }
+        .zoom-btn {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--muji-gold);
+            color: var(--muji-gold);
+            font-size: 32px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* 景點樣式 */
+        .spot-section {
+            border-bottom: 2px solid var(--muji-border);
+            padding-bottom: 2.5rem;
+            margin-bottom: 2.5rem;
+        }
+        .spot-section:last-child { border-bottom: none; }
+        .recommend-tag {
+            background-color: #EFE9D9;
+            color: #8C7355;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 8px;
+        }
+        .star-rating {
+            color: #D4A373;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body class="pb-28">
+
+    <!-- Header -->
+    <header class="pt-20 pb-12 px-6 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-[#4A4A4A]">台北宜蘭旅程 2026</h1>
+        <div class="h-[3px] w-24 bg-[#B6A18B] mx-auto mb-4"></div>
+        <p class="text-xl tracking-[0.2em] font-medium text-[#666]">03.11 WED — 03.17 TUE</p>
+    </header>
+
+    <!-- 字體縮放 -->
+    <div class="font-controls">
+        <button class="zoom-btn" onclick="changeFontSize(2)">+</button>
+        <button class="zoom-btn" onclick="changeFontSize(-2)">-</button>
+    </div>
+
+    <!-- 標籤導覽列 -->
+    <div class="sticky top-0 z-50 bg-[#F7F2E9]/95 backdrop-blur-md border-b border-[#E8E2D9] py-5">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="flex space-x-3 overflow-x-auto no-scrollbar pb-1 md:justify-center">
+                <button onclick="switchDay(0)" id="btn-0" class="day-btn flex-shrink-0 px-6 py-2 rounded border border-[#D1C9BC] font-bold transition-all bg-white text-[#888]">須知</button>
+                <button onclick="switchDay(1)" id="btn-1" class="day-btn flex-shrink-0 px-6 py-2 rounded border border-[#D1C9BC] font-bold transition-all tab-active">D1</button>
+                <button onclick="switchDay(2)" id="btn-2" class="day-btn flex-shrink-0 px-6 py-2 rounded border border-[#D1C9BC] font-bold transition-all bg-white text-[#888]">D2</button>
+                <button onclick="switchDay(3)" id="btn-3" class="day-btn flex-shrink-0 px-6 py-2 rounded border border-[#D1C9BC] font-bold transition-all bg-white text-[#888]">D3</button>
+                <button onclick="switchDay(4)" id="btn-4" class="day-btn flex-shrink-0 px-6 py-2 rounded border border-[#D1C9BC] font-bold transition-all bg-white text-[#888]">D4</button>
+                <button onclick="switchDay(5)" id="btn-5" class="day-btn flex-shrink-0 px-6 py-2 rounded border border-[#D1C9BC] font-bold transition-all bg-white text-[#888]">D5</button>
+                <button onclick="switchDay(6)" id="btn-6" class="day-btn flex-shrink-0 px-5 py-2 rounded border border-[#D1C9BC] font-bold transition-all bg-white text-[#888]">D6</button>
+                <button onclick="switchDay(7)" id="btn-7" class="day-btn flex-shrink-0 px-5 py-2 rounded border border-[#D1C9BC] font-bold transition-all bg-white text-[#888]">D7</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 內容區域 -->
+    <main class="max-w-2xl mx-auto px-5 main-container relative z-10">
+
+        <!-- 須知資訊 (D0) -->
+        <div id="day-0" class="day-content">
+            <div class="bg-white rounded-lg p-8 md:p-10 shadow-sm border border-[#E8E2D9]">
+                <h2 class="text-3xl font-bold mb-10 flex items-center gap-3">
+                    <span class="w-2 h-8 bg-[#B6A18B]"></span> 行前須知與推薦
+                </h2>
+                
+                <div class="space-y-12">
+                    <section class="border-b border-slate-100 pb-10">
+                        <div class="flex items-center gap-3 mb-6">
+                            <i data-lucide="hotel" class="w-8 h-8 text-[#B6A18B]"></i>
+                            <h3 class="text-2xl font-bold">美麗信花園酒店</h3>
+                        </div>
+                        <p class="text-slate-600 mb-6">
+                            位處台北核心地帶。飯店服務優良，環境典雅，是此行的主要休息處。
+                        </p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=美麗信花園酒店" target="_blank" class="map-btn">
+                            <i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航
+                        </a>
+                    </section>
+
+                    <section class="border-b border-slate-100 pb-10">
+                        <div class="flex items-center gap-3 mb-6">
+                            <i data-lucide="shopping-cart" class="w-8 h-8 text-[#B6A18B]"></i>
+                            <h3 class="text-2xl font-bold">推薦採買清單</h3>
+                        </div>
+                        <div class="space-y-6 text-xl">
+                            <div class="bg-[#FAF9F6] p-6 rounded border border-[#E8E2D9]">
+                                <h4 class="font-bold mb-2 underline decoration-[#B6A18B]">【台北】佳德鳳梨酥</h4>
+                                <p class="text-slate-500 mb-4">名揚海外的伴手禮。推薦：原味鳳梨酥、蔓越莓鳳梨酥。</p>
+                                <a href="https://www.google.com/maps/search/?api=1&query=佳德鳳梨酥" target="_blank" class="map-btn py-2 text-sm bg-slate-100 text-slate-700 shadow-none border border-slate-300">Google 地圖導航</a>
+                            </div>
+                            <div class="bg-[#FAF9F6] p-6 rounded border border-[#E8E2D9]">
+                                <h4 class="font-bold mb-2 underline decoration-[#B6A18B]">【大稻埕】有記名茶</h4>
+                                <p class="text-slate-500 mb-4">百年老字號茶行，環境優美。推薦：烏龍茶、焙茶禮盒。</p>
+                                <a href="https://www.google.com/maps/search/?api=1&query=有記名茶" target="_blank" class="map-btn py-2 text-sm bg-slate-100 text-slate-700 shadow-none border border-slate-300">Google 地圖導航</a>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- Day 1 -->
+        <div id="day-1" class="day-content active">
+            <div class="bg-white rounded-lg p-8 md:p-10 shadow-sm border border-[#E8E2D9]">
+                <h2 class="text-3xl font-bold mb-10 flex items-center gap-3">
+                    <span class="w-2 h-8 bg-[#B6A18B]"></span> Day 1 · 3/11 (Wed)
+                </h2>
+                <div class="space-y-12">
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-4">馬航 (MH) 第一航廈 Terminal 1</h3>
+                        <p class="text-slate-600 font-bold mb-2">下午兩點抵達桃園國際機場</p>
+                        <p class="text-slate-500 italic mb-6">航廈地點資訊：馬來西亞航空固定於第一航廈服務。</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=桃園國際機場第一航廈" target="_blank" class="map-btn">
+                            <i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航
+                        </a>
+                    </section>
+
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">祥和蔬食養生料理</h3>
+                        <div class="star-rating">4.5★ (米其林推薦)</div>
+                        <p class="text-slate-600 mb-4">台北著名的川式蔬食。味道紮實細膩，深受長輩好評。</p>
+                        <span class="recommend-tag">推薦：塔香脆腸、松露炒飯</span>
+                        <div class="mt-4"><a href="https://www.google.com/maps/search/?api=1&query=祥和蔬食養生料理" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- Day 2 -->
+        <div id="day-2" class="day-content">
+            <div class="bg-white rounded-lg p-8 md:p-10 shadow-sm border border-[#E8E2D9]">
+                <h2 class="text-3xl font-bold mb-10 flex items-center gap-3">
+                    <span class="w-2 h-8 bg-[#B6A18B]"></span> Day 2 · 3/12 (Thu)
+                </h2>
+                <div class="space-y-12">
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">潮境公園</h3>
+                        <div class="star-rating">4.4★</div>
+                        <p class="text-slate-600 mb-6 italic">視野開闊的海景公園。可以在此輕鬆慢步，欣賞壯觀的海岸線與飛天掃帚裝飾。</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=潮境公園" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a>
+                    </section>
+
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">八斗子觀景平台</h3>
+                        <div class="star-rating">4.3★</div>
+                        <p class="text-slate-600 mb-6">平緩好走的步道，適合長輩在此吹吹海風、拍照留念。</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=八斗子觀景平台" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a>
+                    </section>
+
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">九份老街</h3>
+                        <div class="star-rating">4.2★</div>
+                        <p class="text-slate-600 mb-4 leading-relaxed">懷舊山城。傍晚點燈後的氛圍非常獨特，適合在茶樓中靜心飲茶。</p>
+                        <p class="font-bold text-amber-800">推薦：阿柑姨芋圓、阿妹茶樓</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=九份老街" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- Day 3 -->
+        <div id="day-3" class="day-content">
+            <div class="bg-white rounded-lg p-8 md:p-10 shadow-sm border border-[#E8E2D9]">
+                <h2 class="text-3xl font-bold mb-10 flex items-center gap-3">
+                    <span class="w-2 h-8 bg-[#B6A18B]"></span> Day 3 · 3/13 (Fri)
+                </h2>
+                <div class="space-y-12">
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">清水地熱公園</h3>
+                        <div class="star-rating">4.3★</div>
+                        <p class="text-slate-600 mb-6 italic">體驗在地熱溫泉中烹煮雞蛋與玉米。天然的味道配上戶外泡腳，是非常舒服的體驗。</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=清水地熱公園" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a>
+                    </section>
+
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">九寮溪自然步道</h3>
+                        <div class="star-rating">4.4★</div>
+                        <p class="text-slate-600 mb-6">步道平坦且充滿芬多精，沿途溪水清澈，是極佳的森林浴場所。</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=九寮溪自然步道" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a>
+                    </section>
+
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">金車葛瑪蘭威士忌酒廠</h3>
+                        <div class="star-rating">4.5★</div>
+                        <p class="text-slate-600 mb-6">世界級酒廠。酒窖環境壯麗，展示區提供威士忌生產的專業知識與品評。</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=金車葛瑪蘭威士忌酒廠" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a>
+                    </section>
+
+                    <section class="bg-[#F7F2E9] p-8 rounded-lg">
+                        <h4 class="font-bold text-2xl mb-2 text-[#B6A18B]">晚餐：山珍美饕館 (三重)</h4>
+                        <div class="star-rating">4.1★</div>
+                        <p class="text-slate-600 mb-4">在地老字號台菜名店。食材新鮮，口味傳統而紮實。</p>
+                        <span class="recommend-tag">推薦：特色海鮮熱炒、手路菜</span>
+                        <div class="mt-4"><a href="https://www.google.com/maps/search/?api=1&query=山珍美饕館" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- Day 4 -->
+        <div id="day-4" class="day-content">
+            <div class="bg-white rounded-lg p-8 md:p-10 shadow-sm border border-[#E8E2D9]">
+                <h2 class="text-3xl font-bold mb-10 flex items-center gap-3">
+                    <span class="w-2 h-8 bg-[#B6A18B]"></span> Day 4 · 3/14 (Sat)
+                </h2>
+                <div class="space-y-12">
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">陽明山小油坑遊憩區</h3>
+                        <div class="star-rating">4.4★</div>
+                        <p class="text-slate-600 mb-6 italic">觀察噴氣孔地質景觀。硫磺氣息與自然景象交織，非常壯觀。</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=小油坑遊憩區" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a>
+                    </section>
+
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">午餐：青菜園</h3>
+                        <div class="star-rating">4.4★</div>
+                        <p class="text-slate-600 mb-4">陽明山超人氣土雞城。皮Q肉嫩的白斬雞是每桌必點。</p>
+                        <span class="recommend-tag">推薦：白斬土雞、地瓜湯</span>
+                        <div class="mt-4"><a href="https://www.google.com/maps/search/?api=1&query=青菜園" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a></div>
+                    </section>
+
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">象山攝手平台夜景</h3>
+                        <p class="text-slate-600 mb-6">我們將前往觀景平台。在此可以清晰觀賞台北 101 與台北盆地的城市燈火。</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=象山攝手平台" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a>
+                    </section>
+
+                    <section class="bg-[#333] text-white p-8 rounded-lg shadow-xl">
+                        <h3 class="text-2xl font-bold mb-2">鼎泰豐小籠包</h3>
+                        <div class="star-rating text-amber-400">4.6★</div>
+                        <p class="opacity-80 leading-relaxed mb-6">國際級的傳統美食代表。服務周到且環境整潔。每一口小籠包都是職人精神的展現。</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=鼎泰豐" target="_blank" class="map-btn bg-white text-[#333] border-none">Google 地圖導航</a>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- Day 5 -->
+        <div id="day-5" class="day-content">
+            <div class="bg-white rounded-lg p-8 md:p-10 shadow-sm border border-[#E8E2D9]">
+                <h2 class="text-3xl font-bold mb-10 flex items-center gap-3">
+                    <span class="w-2 h-8 bg-[#B6A18B]"></span> Day 5 · 3/15 (Sun)
+                </h2>
+                <div class="space-y-12">
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">中正紀念堂</h3>
+                        <div class="star-rating">4.5★</div>
+                        <p class="text-slate-600 mb-6 leading-relaxed text-lg">觀賞儀隊交接儀式。園區內的花園造景與宏偉建築極具紀念意義。</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=中正紀念堂" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a>
+                    </section>
+
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">大稻埕與迪化街</h3>
+                        <div class="star-rating">4.4★</div>
+                        <p class="text-slate-600 mb-4">台北老城區代表。豐富的乾貨中藥鋪與百年茶莊，氛圍懷舊悠閒。</p>
+                        <span class="recommend-tag">推薦：有記名茶、姚德和青草號</span>
+                        <div class="mt-4"><a href="https://www.google.com/maps/search/?api=1&query=迪化街" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a></div>
+                    </section>
+
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">樂華夜市</h3>
+                        <div class="star-rating">4.3★</div>
+                        <p class="text-slate-600 mb-4">在地人熱愛的經典夜市。街道平整好逛。</p>
+                        <span class="recommend-tag">推薦：阿爸の芋圓、郭記麻辣臭豆腐</span>
+                        <div class="mt-4"><a href="https://www.google.com/maps/search/?api=1&query=樂華夜市" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- Day 6 -->
+        <div id="day-6" class="day-content">
+            <div class="bg-white rounded-lg p-8 md:p-10 shadow-sm border border-[#E8E2D9]">
+                <h2 class="text-3xl font-bold mb-10 flex items-center gap-3">
+                    <span class="w-2 h-8 bg-[#B6A18B]"></span> Day 6 · 3/16 (Mon)
+                </h2>
+                <div class="space-y-12">
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">貓空纜車</h3>
+                        <div class="star-rating">4.4★</div>
+                        <p class="text-slate-600 mb-6 italic">搭乘水晶纜車升入山際。緩慢平穩的速度，讓您可以俯瞰整座繁華城市。</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=貓空纜車" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a>
+                    </section>
+
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-4">貓空山景喝茶</h3>
+                        <p class="text-slate-600 mb-6 leading-relaxed">在山間茶館中挑選一壺木柵鐵觀音。看著遠方的 101，與家人度過恬靜時光。</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=貓空茶館" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a>
+                    </section>
+
+                    <section class="spot-section">
+                        <h3 class="text-2xl font-bold mb-2">饒河夜市</h3>
+                        <div class="star-rating">4.2★</div>
+                        <p class="text-slate-600 mb-4">燈火輝煌的古老夜市。入口處的慈祐宮非常壯觀。</p>
+                        <span class="recommend-tag">推薦：福州世祖胡椒餅、藥燉排骨</span>
+                        <div class="mt-4"><a href="https://www.google.com/maps/search/?api=1&query=饒河夜市" target="_blank" class="map-btn"><i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Google 地圖導航</a></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- Day 7 -->
+        <div id="day-7" class="day-content">
+            <div class="bg-white rounded-lg p-8 md:p-10 shadow-sm border border-[#E8E2D9]">
+                <h2 class="text-3xl font-bold mb-10 flex items-center gap-3">
+                    <span class="w-2 h-8 bg-[#B6A18B]"></span> Day 7 · 3/17 (Tue)
+                </h2>
+                <div class="text-center py-10">
+                    <h3 class="text-2xl font-bold mb-6">市區最後漫遊與採買</h3>
+                    <p class="text-slate-600 mb-10 leading-relaxed text-xl">
+                        最後在飯店周邊或市區商圈放慢腳步。確保行囊中已裝滿佳德鳳梨酥與滿滿的回憶。
+                    </p>
+                    
+                    <div class="bg-slate-50 p-10 rounded-lg mb-12 border-2 border-dashed border-slate-300">
+                        <p class="text-xl font-bold text-slate-800 mb-2">馬航 (MH) 第一航廈 Terminal 1</p>
+                        <p class="text-3xl font-bold text-[#B6A18B] mb-4 tracking-widest">15:00 班機起飛</p>
+                        <p class="text-rose-500 font-bold text-2xl">※ 務必於 13:00 前抵達機場</p>
+                    </div>
+                    
+                    <a href="https://www.google.com/maps/search/?api=1&query=桃園國際機場第一航廈" target="_blank" class="map-btn w-full justify-center py-5">桃園機場第一航廈 · Google 地圖導覽</a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="mt-20 text-center pb-12 opacity-50">
+        <p class="text-sm">Wish you a wonderful journey with your family.</p>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // 字體縮放
+        function changeFontSize(delta) {
+            const currentSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--base-size'));
+            const newSize = Math.max(14, Math.min(42, currentSize + delta));
+            document.documentElement.style.setProperty('--base-size', newSize + 'px');
+        }
+
+        // 分頁切換
+        function switchDay(dayNum) {
+            const allContent = document.querySelectorAll('.day-content');
+            allContent.forEach(content => content.classList.remove('active'));
+            document.getElementById(`day-${dayNum}`).classList.add('active');
+
+            const allBtns = document.querySelectorAll('.day-btn');
+            allBtns.forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('bg-white', 'text-[#888]');
+            });
+            const activeBtn = document.getElementById(`btn-${dayNum}`);
+            activeBtn.classList.add('tab-active');
+            activeBtn.classList.remove('bg-white', 'text-[#888]');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
